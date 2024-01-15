@@ -180,24 +180,30 @@ export async function createCustomer(prevState: State, formData: FormData) {
 export async function updateCustomer(id: string, prevState: State, formData: FormData) {
     const validatedFields = UpdateCustomer.safeParse({
         name: formData.get('name'),
+        email: formData.get('email')
     });
 
+    console.log('Data fetched, validating....')
+
     if (!validatedFields.success) {
+        console.log('Data Invalid.')
         return {
             errors: validatedFields.error.flatten().fieldErrors,
             message: 'Missing Fields. Failed to Update Customer.',
         };
     }
 
-    const { name } = validatedFields.data;
+    const { name, email } = validatedFields.data;
 
     try {
         await sql`
           UPDATE customers
-          SET name = ${name}
+          SET name = ${name},
+          email = ${email}
           WHERE id = ${id}
         `;
     } catch (error) {
+        console.log('Error occurred updating data.' + error)
         return { message: 'Database Error: Failed to Update Customer.' };
     }
 

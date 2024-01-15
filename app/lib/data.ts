@@ -7,6 +7,7 @@ import {
   LatestInvoiceRaw,
   User,
   Revenue,
+  Customer,
 } from './definitions';
 import { formatCurrency } from './utils';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -249,6 +250,30 @@ export async function fetchFilteredCustomers(query: string, currentPage: number)
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch customer table.');
+  }
+}
+
+export async function fetchCustomerById(id: string) {
+  noStore();
+  try {
+    const data = await sql<Customer>`
+      SELECT
+        customers.id,
+        customers.name,
+        customers.email
+      FROM customers
+      WHERE customers.id = ${id};
+    `;
+
+    const customers = data.rows.map((customer) => ({
+      ...customer,
+    }));
+
+    console.log(customers); // Invoice is an empty array []
+    return customers[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch customers.');
   }
 }
 

@@ -87,3 +87,11 @@ export type InvoiceForm = {
   date: string;
   status: 'pending' | 'paid';
 };
+
+export type ExpenseField = {
+  id: string;
+  name: string;
+  type: string;
+  amount: number;
+  expense_date: string;
+};

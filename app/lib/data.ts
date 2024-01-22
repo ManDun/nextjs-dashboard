@@ -8,6 +8,7 @@ import {
   User,
   Revenue,
   Customer,
+  ExpenseField,
 } from './definitions';
 import { formatCurrency } from './utils';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -68,23 +69,29 @@ export async function fetchCardData() {
          SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS "paid",
          SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
          FROM invoices`;
+    const totalExpensesPromise = sql`SELECT
+         SUM(amount) AS "total"
+         FROM expenses`;
 
     const data = await Promise.all([
       invoiceCountPromise,
       customerCountPromise,
       invoiceStatusPromise,
+      totalExpensesPromise,
     ]);
 
     const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
     const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
     const totalPaidInvoices = formatCurrency(data[2].rows[0].paid ?? '0');
     const totalPendingInvoices = formatCurrency(data[2].rows[0].pending ?? '0');
+    const totalExpenses = formatCurrency(data[3].rows[0].total ?? '0');
 
     return {
       numberOfCustomers,
       numberOfInvoices,
       totalPaidInvoices,
       totalPendingInvoices,
+      totalExpenses,
     };
   } catch (error) {
     console.error('Database Error:', error);
@@ -274,6 +281,113 @@ export async function fetchCustomerById(id: string) {
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch customers.');
+  }
+}
+
+
+const EXPENSES_PER_PAGE = 6
+export async function fetchExpensesPages(query: string) {
+  noStore();
+  try {
+    const count = await sql`SELECT COUNT(*)
+    FROM expenses
+    WHERE
+    expenses.name ILIKE ${`%${query}%`} OR
+    expenses.type ILIKE ${`%${query}%`} OR
+    expenses.amount::text ILIKE ${`%${query}%`} 
+  `;
+
+    const totalPages = Math.ceil(Number(count.rows[0].count) / EXPENSES_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of expenses.');
+  }
+}
+
+export async function fetchExpenses() {
+  noStore();
+  try {
+    const data = await sql<ExpenseField>`
+      SELECT
+      id,
+      name,
+      type,
+      amount,
+      expense_date
+      FROM expenses
+      ORDER BY expense_date ASC
+    `;
+
+    const expenses = data.rows;
+    return expenses;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch all expenses.');
+  }
+}
+
+export async function fetchFilteredExpenses(query: string, currentPage: number) {
+
+  console.log('Fetching filtered expenses: ' + query)
+  noStore();
+  const offset = (currentPage - 1) * EXPENSES_PER_PAGE;
+  try {
+    const data = await sql<ExpenseField>`
+		SELECT
+    id,
+    name,
+    type,
+    amount,
+    expense_date
+		FROM expenses
+    WHERE
+		name ILIKE ${`%${query}%`} OR
+    type ILIKE ${`%${query}%`} OR
+    amount::text ILIKE ${`%${query}%`} 
+		ORDER BY expense_date ASC
+    LIMIT ${EXPENSES_PER_PAGE} OFFSET ${offset}
+	  `;
+
+    const expenses = data.rows.map((expense) => ({
+      ...expense,
+    }));
+
+    console.log('Expenses returned: ' + expenses)
+
+    return expenses;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch expense table.');
+  }
+}
+
+export async function fetchExpenseById(id: string) {
+  noStore();
+  console.log('Fetching expense with id: ' + id)
+  try {
+    const data = await sql<ExpenseField>`
+      SELECT
+      expenses.id,
+      expenses.name,
+      expenses.type,
+      expenses.amount,
+      TO_CHAR(expenses.expense_date, 'yyyy-mm-dd') AS expense_date
+      FROM expenses
+      WHERE expenses.id = ${id};
+    `;
+
+    const expenses = data.rows.map((expense) => ({
+      ...expense,
+      // Convert amount from cents to dollars
+      amount: expense.amount / 100,
+    }));
+
+    console.log(expenses); // Expense is an empty array []
+    return expenses[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch expenses.');
   }
 }
 

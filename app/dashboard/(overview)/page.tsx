@@ -8,29 +8,13 @@ import { RevenueChartSkeleton, LatestInvoicesSkeleton, CardsSkeleton } from '@/a
 import CardWrapper from '@/app/ui/dashboard/cards';
 
 export default async function Page() {
-  // const revenue = await fetchRevenue();
-  // const latestInvoices = await fetchLatestInvoices();
-  // const {
-  //   numberOfInvoices,
-  //   numberOfCustomers,
-  //   totalPaidInvoices,
-  //   totalPendingInvoices,
-  // } = await fetchCardData();
 
   return (
     <main>
       <h1 className='mb-4 text-2xl md:text-3xl`}'>
         Dashboard
       </h1>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {/* <Card title="Collected" value={totalPaidInvoices} type="collected" />
-        <Card title="Pending" value={totalPendingInvoices} type="pending" />
-        <Card title="Total Invoices" value={numberOfInvoices} type="invoices" />
-        <Card
-          title="Total Customers"
-          value={numberOfCustomers}
-          type="customers"
-        /> */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
         <Suspense fallback={<CardsSkeleton />}>
           <CardWrapper />
         </Suspense>

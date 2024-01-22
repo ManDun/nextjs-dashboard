@@ -12,7 +12,10 @@ const InvoiceFormSchema = z.object({
     customerId: z.string({
         invalid_type_error: 'Please select a customer.',
     }),
-    amount: z.coerce.number().gt(0, { message: 'Please enter an amount greater than $0.' }),
+    amount: z.number({
+        required_error: "Amount is required",
+        invalid_type_error: "Amount must be a number",
+    }),
     status: z.enum(['pending', 'paid'],
         { invalid_type_error: 'Please select an invoice status.', }),
     date: z.string({
@@ -32,11 +35,30 @@ const CustomerFormSchema = z.object({
     })
 });
 
+const ExpenseFormSchema = z.object({
+    id: z.string(),
+    name: z.string({
+        required_error: "Name is required",
+        invalid_type_error: "Name must be a string",
+    }),
+    amount: z.coerce.number().gt(0, { message: 'Please enter an amount greater than $0.' }),
+    type: z.string({
+        required_error: "Type is required",
+        invalid_type_error: "Type must be a string",
+    }),
+    expense_date: z.string({
+        required_error: "Date is required",
+    }),
+});
+
 const CreateInvoice = InvoiceFormSchema.omit({ id: true });
 const UpdateInvoice = InvoiceFormSchema.omit({ id: true });
 
 const CreateCustomer = CustomerFormSchema.omit({ id: true });
 const UpdateCustomer = CustomerFormSchema.omit({ id: true });
+
+const CreateExpense = ExpenseFormSchema.omit({ id: true });
+const UpdateExpense = ExpenseFormSchema.omit({ id: true });
 
 export type State = {
     errors?: {
@@ -45,6 +67,7 @@ export type State = {
         status?: string[];
         name?: string[];
         date?: string[];
+        type?: string[];
     };
     message?: string | null;
 };
@@ -212,7 +235,6 @@ export async function updateCustomer(id: string, prevState: State, formData: For
 }
 
 export async function deleteCustomer(id: string) {
-    throw new Error('Failed to Delete Customer');
 
     try {
         await sql`DELETE FROM customers WHERE id = ${id}`;
@@ -220,6 +242,102 @@ export async function deleteCustomer(id: string) {
         return { message: 'Deleted Customer.' };
     } catch (error) {
         return { message: 'Database Error: Failed to Delete Customer.' };
+    }
+}
+
+
+// Expenses
+export async function createExpense(prevState: State, formData: FormData) {
+
+    console.log('Creating Expense.....' + formData.get('amount'))
+
+    const validatedFields = CreateExpense.safeParse({
+        name: formData.get('name'),
+        type: formData.get('type'),
+        amount: formData.get('amount'),
+        expense_date: formData.get('expense_date')
+    });
+
+    // If form validation fails, return errors early. Otherwise, continue.
+    if (!validatedFields.success) {
+        console.log('Missing fields, validation failed.')
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Missing Fields. Failed to Create Expense.',
+        };
+    }
+
+    // Prepare data for insertion into the database
+    const { name, type, amount, expense_date } = validatedFields.data;
+    console.log('Amount: ' + `${amount}`)
+    const date = new Date().toISOString().split('T')[0];
+    const amountInCents = amount * 100;
+
+    try {
+        console.log('Inserting expense data into database.' + `${amountInCents}`)
+        await sql`
+          INSERT INTO expenses (name, type, amount, expense_date, date)
+          VALUES (${name}, ${type}, ${amountInCents}, ${expense_date}, ${date})
+        `;
+    } catch (error) {
+        console.log('Error, database failed while creating expense. ' + { error })
+        return {
+            message: 'Database Error: Failed to Create Expense.',
+        };
+    }
+
+    revalidatePath('/dashboard/expenses');
+    redirect('/dashboard/expenses');
+}
+
+
+export async function updateExpense(id: string, prevState: State, formData: FormData) {
+    const validatedFields = UpdateExpense.safeParse({
+        name: formData.get('name'),
+        type: formData.get('type'),
+        amount: formData.get('amount'),
+        expense_date: formData.get('expense_date')
+    });
+
+    console.log('Data fetched, validating....')
+
+    if (!validatedFields.success) {
+        console.log('Data Invalid.')
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Missing Fields. Failed to Update Expense.',
+        };
+    }
+
+    const { name, type, amount, expense_date } = validatedFields.data;
+    const amountInCents = amount * 100;
+
+    try {
+        await sql`
+          UPDATE expenses
+          SET name = ${name},
+          type = ${type},
+          amount = ${amountInCents},
+          expense_date = ${expense_date}
+          WHERE id = ${id}
+        `;
+    } catch (error) {
+        console.log('Error occurred updating data.' + error)
+        return { message: 'Database Error: Failed to Update Expense.' };
+    }
+
+    revalidatePath('/dashboard/expenses');
+    redirect('/dashboard/expenses');
+}
+
+export async function deleteExpense(id: string) {
+
+    try {
+        await sql`DELETE FROM expenses WHERE id = ${id}`;
+        revalidatePath('/dashboard/expenses');
+        return { message: 'Deleted Expense.' };
+    } catch (error) {
+        return { message: 'Database Error: Failed to Delete Expense.' };
     }
 }
 

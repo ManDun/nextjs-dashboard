@@ -15,7 +15,7 @@ export function CreateExpense() {
 }
 
 export function UpdateExpense({ id }: { id: string }) {
-  console.log('Inside update expense: ' + id)
+
   return (
     <Link
       href={`/dashboard/expenses/${id}/edit`}

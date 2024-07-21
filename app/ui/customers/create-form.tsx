@@ -4,9 +4,7 @@ import { useFormState } from 'react-dom';
 import { CustomerField } from '@/app/lib/definitions';
 import Link from 'next/link';
 import {
-    CheckIcon,
-    ClockIcon,
-    CurrencyDollarIcon,
+    IdentificationIcon,
     UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
@@ -35,6 +33,7 @@ export default function Form() {
                                 required
                                 aria-describedby="name-error"
                             />
+                            <UserCircleIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
                         </div>
                         <div id="name-error" aria-live="polite" aria-atomic="true">
                             {state.errors?.name &&
@@ -62,6 +61,7 @@ export default function Form() {
                                 required
                                 aria-describedby="name-error"
                             />
+                            <IdentificationIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
                         </div>
                         <div id="name-error" aria-live="polite" aria-atomic="true">
                             {state.errors?.name &&

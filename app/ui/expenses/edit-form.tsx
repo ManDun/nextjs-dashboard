@@ -19,7 +19,7 @@ export default function EditExpenseForm({
   expenses: ExpenseField;
 
 }) {
-  const initialState = { message: null, errors: {} };
+  const initialState = { message: "", errors: {} };
   const updateExpenseWithId = updateExpense.bind(null, expenses.id);
   const [state, dispatch] = useFormState(updateExpenseWithId, initialState);
 
@@ -121,7 +121,7 @@ export default function EditExpenseForm({
               <textarea
                 id="comments"
                 name="comments"
-                rows="1"
+                rows={1}
                 defaultValue={expenses.comments}
                 required
                 placeholder="Enter coments"

@@ -18,7 +18,7 @@ export default function EditCustomerForm({
 }: {
     customers: Customer;
 }) {
-    const initialState = { message: null, errors: {} };
+    const initialState = { message: "", errors: {} };
     const updateCustomerWithId = updateCustomer.bind(null, customers.id);
     const [state, dispatch] = useFormState(updateCustomerWithId, initialState);
 

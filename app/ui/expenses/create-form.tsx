@@ -14,7 +14,7 @@ import { Button } from '@/app/ui/button';
 import { createExpense } from '@/app/lib/actions';
 
 export default function Form() {
-    const initialState = { message: null, errors: {} };
+    const initialState = { message: "", errors: {} };
     const [state, dispatch] = useFormState(createExpense, initialState);
 
     return (

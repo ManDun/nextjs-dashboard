@@ -49,6 +49,7 @@ const ExpenseFormSchema = z.object({
     expense_date: z.string({
         required_error: "Date is required",
     }),
+    comments: z.string()
 });
 
 const CreateInvoice = InvoiceFormSchema.omit({ id: true });
@@ -249,13 +250,14 @@ export async function deleteCustomer(id: string) {
 // Expenses
 export async function createExpense(prevState: State, formData: FormData) {
 
-    console.log('Creating Expense.....' + formData.get('amount'))
+    console.log('Creating Expense.....' + formData.get('comments'))
 
     const validatedFields = CreateExpense.safeParse({
         name: formData.get('name'),
         type: formData.get('type'),
         amount: formData.get('amount'),
-        expense_date: formData.get('expense_date')
+        expense_date: formData.get('expense_date'),
+        comments: formData.get('comments')
     });
 
     // If form validation fails, return errors early. Otherwise, continue.
@@ -268,16 +270,16 @@ export async function createExpense(prevState: State, formData: FormData) {
     }
 
     // Prepare data for insertion into the database
-    const { name, type, amount, expense_date } = validatedFields.data;
-    console.log('Amount: ' + `${amount}`)
+    const { name, type, amount, expense_date, comments } = validatedFields.data;
+    console.log('Comments: ' + `${comments}`)
     const date = new Date().toISOString().split('T')[0];
     const amountInCents = amount * 100;
 
     try {
         console.log('Inserting expense data into database.' + `${amountInCents}`)
         await sql`
-          INSERT INTO expenses (name, type, amount, expense_date, date)
-          VALUES (${name}, ${type}, ${amountInCents}, ${expense_date}, ${date})
+          INSERT INTO expenses (name, type, amount, expense_date, date, comments)
+          VALUES (${name}, ${type}, ${amountInCents}, ${expense_date}, ${date}, ${comments})
         `;
     } catch (error) {
         console.log('Error, database failed while creating expense. ' + { error })
@@ -296,7 +298,8 @@ export async function updateExpense(id: string, prevState: State, formData: Form
         name: formData.get('name'),
         type: formData.get('type'),
         amount: formData.get('amount'),
-        expense_date: formData.get('expense_date')
+        expense_date: formData.get('expense_date'),
+        comments: formData.get('comments')
     });
 
     console.log('Data fetched, validating....')
@@ -309,7 +312,7 @@ export async function updateExpense(id: string, prevState: State, formData: Form
         };
     }
 
-    const { name, type, amount, expense_date } = validatedFields.data;
+    const { name, type, amount, expense_date, comments } = validatedFields.data;
     const amountInCents = amount * 100;
 
     try {
@@ -318,7 +321,8 @@ export async function updateExpense(id: string, prevState: State, formData: Form
           SET name = ${name},
           type = ${type},
           amount = ${amountInCents},
-          expense_date = ${expense_date}
+          expense_date = ${expense_date},
+          comments = ${comments}
           WHERE id = ${id}
         `;
     } catch (error) {

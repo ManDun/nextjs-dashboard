@@ -94,4 +94,5 @@ export type ExpenseField = {
   type: string;
   amount: number;
   expense_date: string;
+  comments: string;
 };

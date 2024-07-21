@@ -372,7 +372,8 @@ export async function fetchExpenseById(id: string) {
       expenses.name,
       expenses.type,
       expenses.amount,
-      TO_CHAR(expenses.expense_date, 'yyyy-mm-dd') AS expense_date
+      TO_CHAR(expenses.expense_date, 'yyyy-mm-dd') AS expense_date,
+      expenses.comments
       FROM expenses
       WHERE expenses.id = ${id};
     `;

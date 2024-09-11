@@ -59,7 +59,7 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
         {/* Invoice Amount */}
         <div className="mb-4">
           <label htmlFor="amount" className="mb-2 block text-sm font-medium">
-            Choose an amount
+            Enter an Amount
           </label>
           <div className="relative mt-2 rounded-md">
             <div className="relative">
@@ -105,8 +105,8 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
               <CalendarDaysIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
             </div>
             <div id="date-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.date &&
-                state.errors.date.map((error: string) => (
+              {state.errors?.invoice_date &&
+                state.errors.invoice_date.map((error: string) => (
                   <p className="mt-2 text-sm text-red-500" key={error}>
                     {error}
                   </p>

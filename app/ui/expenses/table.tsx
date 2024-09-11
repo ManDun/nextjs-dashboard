@@ -28,6 +28,7 @@ export default async function ExpensesTable({
                       <p>{expense.name}</p>
                     </div>
                     <p className="text-sm text-gray-500">{expense.type}</p>
+                    <p className="text-sm text-gray-500">{expense.comments}</p>
                   </div>
                 </div>
                 <div className="flex w-full items-center justify-between pt-4">
@@ -36,6 +37,7 @@ export default async function ExpensesTable({
                       {formatCurrency(expense.amount)}
                     </p>
                     <p>{formatDateToLocal(expense.expense_date)}</p>
+
                   </div>
                   <div className="flex justify-end gap-2">
                     <UpdateExpense id={expense.id} />
@@ -59,6 +61,9 @@ export default async function ExpensesTable({
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Date
+                </th>
+                <th scope="col" className="px-3 py-5 font-medium">
+                  Comments
                 </th>
                 <th scope="col" className="relative py-3 pl-6 pr-3">
                   <span className="sr-only">Edit</span>
@@ -84,6 +89,9 @@ export default async function ExpensesTable({
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {formatDateToLocal(expense.expense_date)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {expense.comments}
                   </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">

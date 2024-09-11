@@ -18,7 +18,7 @@ const InvoiceFormSchema = z.object({
     }),
     status: z.enum(['pending', 'paid'],
         { invalid_type_error: 'Please select an invoice status.', }),
-    date: z.string({
+    invoice_date: z.string({
         required_error: "Date is required",
     }),
 });
@@ -67,7 +67,7 @@ export type State = {
         amount?: string[];
         status?: string[];
         name?: string[];
-        date?: string[];
+        invoice_date?: string[];
         type?: string[];
     };
     message?: string | null;
@@ -75,15 +75,18 @@ export type State = {
 
 export async function createInvoice(prevState: State, formData: FormData) {
 
+    console.log("Inside function to create invoice")
+
     const validatedFields = CreateInvoice.safeParse({
         customerId: formData.get('customerId'),
-        amount: formData.get('amount'),
-        date: formData.get('invoicedate'),
+        amount: Number(formData.get('amount')),
+        invoice_date: formData.get('invoicedate'),
         status: formData.get('status'),
     });
 
     // If form validation fails, return errors early. Otherwise, continue.
     if (!validatedFields.success) {
+        console.error("Field level validation failed.")
         return {
             errors: validatedFields.error.flatten().fieldErrors,
             message: 'Missing Fields. Failed to Create Invoice.',
@@ -91,20 +94,26 @@ export async function createInvoice(prevState: State, formData: FormData) {
     }
 
     // Prepare data for insertion into the database
-    const { customerId, amount, date, status } = validatedFields.data;
+    const { customerId, amount, invoice_date, status } = validatedFields.data;
     const amountInCents = amount * 100;
     // const date = new Date().toISOString().split('T')[0];
 
+    console.log('Fields valid, updating database...')
+
     try {
         await sql`
-          INSERT INTO invoices (customer_id, amount, status, date)
-          VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+          INSERT INTO invoices (customer_id, amount, status, invoice_date)
+          VALUES (${customerId}, ${amountInCents}, ${status}, ${invoice_date})
         `;
-    } catch (error) {
+    } catch (error: any) {
+        console.error("An error Occured: ", error.message);
         return {
+
             message: 'Database Error: Failed to Create Invoice.',
         };
     }
+
+    console.info("Invoice created.")
 
     revalidatePath('/dashboard/invoices');
     redirect('/dashboard/invoices');
@@ -114,8 +123,8 @@ export async function createInvoice(prevState: State, formData: FormData) {
 export async function updateInvoice(id: string, prevState: State, formData: FormData) {
     const validatedFields = UpdateInvoice.safeParse({
         customerId: formData.get('customerId'),
-        amount: formData.get('amount'),
-        date: formData.get('date'),
+        amount: Number(formData.get('amount')),
+        invoice_date: formData.get('date'),
         status: formData.get('status'),
     });
 
@@ -130,13 +139,13 @@ export async function updateInvoice(id: string, prevState: State, formData: Form
 
     console.log('Fields valid, updating database...')
 
-    const { customerId, amount, date, status } = validatedFields.data;
+    const { customerId, amount, invoice_date, status } = validatedFields.data;
     const amountInCents = amount * 100;
 
     try {
         await sql`
           UPDATE invoices
-          SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}, date = ${date}
+          SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}, invoice_date = ${invoice_date}
           WHERE id = ${id}
         `;
     } catch (error) {
@@ -178,16 +187,18 @@ export async function createCustomer(prevState: State, formData: FormData) {
         };
     }
 
+    console.log('Fields valid, updating database...')
+
     // Prepare data for insertion into the database
     const { name, email } = validatedFields.data;
     const image_url = '/customers/amy-burns.png'
-    const date = new Date().toISOString().split('T')[0];
+    // const date = new Date().toISOString().split('T')[0];
 
     try {
         console.log('Inserting customer data into database.' + { name })
         await sql`
-          INSERT INTO customers (name, email, date, image_url)
-          VALUES (${name}, ${email}, ${date}, ${image_url})
+          INSERT INTO customers (name, email, image_url)
+          VALUES (${name}, ${email}, ${image_url})
         `;
     } catch (error) {
         console.log('Error, database failed while creating customer. ' + { error })
@@ -195,6 +206,8 @@ export async function createCustomer(prevState: State, formData: FormData) {
             message: 'Database Error: Failed to Create Customer.',
         };
     }
+
+    console.info('Customer created.')
 
     revalidatePath('/dashboard/customers');
     redirect('/dashboard/customers');
@@ -217,6 +230,8 @@ export async function updateCustomer(id: string, prevState: State, formData: For
         };
     }
 
+    console.log('Fields valid, updating database...')
+
     const { name, email } = validatedFields.data;
 
     try {
@@ -230,6 +245,8 @@ export async function updateCustomer(id: string, prevState: State, formData: For
         console.log('Error occurred updating data.' + error)
         return { message: 'Database Error: Failed to Update Customer.' };
     }
+
+    console.info('Customer updated.')
 
     revalidatePath('/dashboard/customers');
     redirect('/dashboard/customers');
@@ -255,7 +272,7 @@ export async function createExpense(prevState: State, formData: FormData) {
     const validatedFields = CreateExpense.safeParse({
         name: formData.get('name'),
         type: formData.get('type'),
-        amount: formData.get('amount'),
+        amount: Number(formData.get('amount')),
         expense_date: formData.get('expense_date'),
         comments: formData.get('comments')
     });
@@ -269,24 +286,28 @@ export async function createExpense(prevState: State, formData: FormData) {
         };
     }
 
+    console.log('Fields valid, updating database...')
+
     // Prepare data for insertion into the database
     const { name, type, amount, expense_date, comments } = validatedFields.data;
-    console.log('Comments: ' + `${comments}`)
-    const date = new Date().toISOString().split('T')[0];
+    console.log('Comments: ' + `${comments}`, `${name}`, `${type}`)
+    // const date = new Date().toISOString().split('T')[0];
     const amountInCents = amount * 100;
 
     try {
         console.log('Inserting expense data into database.' + `${amountInCents}`)
         await sql`
-          INSERT INTO expenses (name, type, amount, expense_date, date, comments)
-          VALUES (${name}, ${type}, ${amountInCents}, ${expense_date}, ${date}, ${comments})
+          INSERT INTO expenses (name, type, amount, expense_date, comments)
+          VALUES (${name}, ${type}, ${amountInCents}, ${expense_date}, ${comments})
         `;
-    } catch (error) {
-        console.log('Error, database failed while creating expense. ' + { error })
+    } catch (error: any) {
+        console.error("An error Occured: ", error.message);
         return {
             message: 'Database Error: Failed to Create Expense.',
         };
     }
+
+    console.info('Expense created.')
 
     revalidatePath('/dashboard/expenses');
     redirect('/dashboard/expenses');
@@ -297,7 +318,7 @@ export async function updateExpense(id: string, prevState: State, formData: Form
     const validatedFields = UpdateExpense.safeParse({
         name: formData.get('name'),
         type: formData.get('type'),
-        amount: formData.get('amount'),
+        amount: Number(formData.get('amount')),
         expense_date: formData.get('expense_date'),
         comments: formData.get('comments')
     });
@@ -312,6 +333,8 @@ export async function updateExpense(id: string, prevState: State, formData: Form
         };
     }
 
+    console.log('Fields valid, updating database...')
+
     const { name, type, amount, expense_date, comments } = validatedFields.data;
     const amountInCents = amount * 100;
 
@@ -325,10 +348,12 @@ export async function updateExpense(id: string, prevState: State, formData: Form
           comments = ${comments}
           WHERE id = ${id}
         `;
-    } catch (error) {
-        console.log('Error occurred updating data.' + error)
+    } catch (error: any) {
+        console.error('Error occurred updating data.', error.message)
         return { message: 'Database Error: Failed to Update Expense.' };
     }
+
+    console.info('Expense updated.')
 
     revalidatePath('/dashboard/expenses');
     redirect('/dashboard/expenses');

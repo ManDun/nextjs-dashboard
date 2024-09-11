@@ -43,7 +43,7 @@ export async function fetchLatestInvoices() {
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
       JOIN customers ON invoices.customer_id = customers.id
-      ORDER BY invoices.date DESC
+      ORDER BY invoices.invoice_date DESC
       LIMIT 5`;
 
     const latestInvoices = data.rows.map((invoice) => ({
@@ -112,7 +112,7 @@ export async function fetchFilteredInvoices(
       SELECT
         invoices.id,
         invoices.amount,
-        invoices.date,
+        invoices.invoice_date,
         invoices.status,
         customers.name,
         customers.email,
@@ -123,9 +123,9 @@ export async function fetchFilteredInvoices(
         customers.name ILIKE ${`%${query}%`} OR
         customers.email ILIKE ${`%${query}%`} OR
         invoices.amount::text ILIKE ${`%${query}%`} OR
-        invoices.date::text ILIKE ${`%${query}%`} OR
+        invoices.invoice_date::text ILIKE ${`%${query}%`} OR
         invoices.status ILIKE ${`%${query}%`}
-      ORDER BY invoices.date DESC
+      ORDER BY invoices.invoice_date DESC
       LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
     `;
 
@@ -146,7 +146,7 @@ export async function fetchInvoicesPages(query: string) {
       customers.name ILIKE ${`%${query}%`} OR
       customers.email ILIKE ${`%${query}%`} OR
       invoices.amount::text ILIKE ${`%${query}%`} OR
-      invoices.date::text ILIKE ${`%${query}%`} OR
+      invoices.invoice_date::text ILIKE ${`%${query}%`} OR
       invoices.status ILIKE ${`%${query}%`}
   `;
 
@@ -166,7 +166,7 @@ export async function fetchInvoiceById(id: string) {
         invoices.id,
         invoices.customer_id,
         invoices.amount,
-        TO_CHAR(invoices.date, 'yyyy-mm-dd') AS date,
+        TO_CHAR(invoices.invoice_date, 'yyyy-mm-dd') AS date,
         invoices.status
       FROM invoices
       WHERE invoices.id = ${id};
@@ -339,12 +339,14 @@ export async function fetchFilteredExpenses(query: string, currentPage: number) 
     name,
     type,
     amount,
-    expense_date
+    expense_date,
+    comments
 		FROM expenses
     WHERE
 		name ILIKE ${`%${query}%`} OR
     type ILIKE ${`%${query}%`} OR
-    amount::text ILIKE ${`%${query}%`} 
+    amount::text ILIKE ${`%${query}%`} OR
+    comments ILIKE ${`%${query}%`}
 		ORDER BY expense_date ASC
     LIMIT ${EXPENSES_PER_PAGE} OFFSET ${offset}
 	  `;

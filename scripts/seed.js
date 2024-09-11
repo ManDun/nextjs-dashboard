@@ -16,29 +16,30 @@ async function seedUsers(client) {
         id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        created timestamp default current_timestamp
       );
     `;
 
     console.log(`Created "users" table`);
 
     // Insert data into the "users" table
-    const insertedUsers = await Promise.all(
-      users.map(async (user) => {
-        const hashedPassword = await bcrypt.hash(user.password, 10);
-        return client.sql`
-        INSERT INTO users (id, name, email, password)
-        VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})
-        ON CONFLICT (id) DO NOTHING;
-      `;
-      }),
-    );
+    // const insertedUsers = await Promise.all(
+    //   users.map(async (user) => {
+    //     const hashedPassword = await bcrypt.hash(user.password, 10);
+    //     return client.sql`
+    //     INSERT INTO users (id, name, email, password)
+    //     VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})
+    //     ON CONFLICT (id) DO NOTHING;
+    //   `;
+    //   }),
+    // );
 
-    console.log(`Seeded ${insertedUsers.length} users`);
+    // console.log(`Seeded ${insertedUsers.length} users`);
 
     return {
       createTable,
-      users: insertedUsers,
+      // users: insertedUsers,
     };
   } catch (error) {
     console.error('Error seeding users:', error);
@@ -57,28 +58,29 @@ async function seedInvoices(client) {
     customer_id UUID NOT NULL,
     amount INT NOT NULL,
     status VARCHAR(255) NOT NULL,
-    date DATE NOT NULL
+    invoice_date DATE NOT NULL,
+    created timestamp default current_timestamp
   );
 `;
 
     console.log(`Created "invoices" table`);
 
     // Insert data into the "invoices" table
-    const insertedInvoices = await Promise.all(
-      invoices.map(
-        (invoice) => client.sql`
-        INSERT INTO invoices (customer_id, amount, status, date)
-        VALUES (${invoice.customer_id}, ${invoice.amount}, ${invoice.status}, ${invoice.date})
-        ON CONFLICT (id) DO NOTHING;
-      `,
-      ),
-    );
+    // const insertedInvoices = await Promise.all(
+    //   invoices.map(
+    //     (invoice) => client.sql`
+    //     INSERT INTO invoices (customer_id, amount, status, date)
+    //     VALUES (${invoice.customer_id}, ${invoice.amount}, ${invoice.status}, ${invoice.date}, ${invoice.created})
+    //     ON CONFLICT (id) DO NOTHING;
+    //   `,
+    //   ),
+    // );
 
-    console.log(`Seeded ${insertedInvoices.length} invoices`);
+    // console.log(`Seeded ${insertedInvoices.length} invoices`);
 
     return {
       createTable,
-      invoices: insertedInvoices,
+      // invoices: insertedInvoices,
     };
   } catch (error) {
     console.error('Error seeding invoices:', error);
@@ -96,28 +98,29 @@ async function seedCustomers(client) {
         id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
-        image_url VARCHAR(255) NOT NULL
+        image_url VARCHAR(255) NOT NULL,
+        created timestamp default current_timestamp
       );
     `;
 
     console.log(`Created "customers" table`);
 
     // Insert data into the "customers" table
-    const insertedCustomers = await Promise.all(
-      customers.map(
-        (customer) => client.sql`
-        INSERT INTO customers (id, name, email, image_url)
-        VALUES (${customer.id}, ${customer.name}, ${customer.email}, ${customer.image_url})
-        ON CONFLICT (id) DO NOTHING;
-      `,
-      ),
-    );
+    // const insertedCustomers = await Promise.all(
+    //   customers.map(
+    //     (customer) => client.sql`
+    //     INSERT INTO customers (id, name, email, image_url)
+    //     VALUES (${customer.id}, ${customer.name}, ${customer.email}, ${customer.image_url}, ${customer.created})
+    //     ON CONFLICT (id) DO NOTHING;
+    //   `,
+    //   ),
+    // );
 
-    console.log(`Seeded ${insertedCustomers.length} customers`);
+    // console.log(`Seeded ${insertedCustomers.length} customers`);
 
     return {
       createTable,
-      customers: insertedCustomers,
+      // customers: insertedCustomers,
     };
   } catch (error) {
     console.error('Error seeding customers:', error);
@@ -131,7 +134,8 @@ async function seedRevenue(client) {
     const createTable = await client.sql`
       CREATE TABLE IF NOT EXISTS revenue (
         month VARCHAR(4) NOT NULL UNIQUE,
-        revenue INT NOT NULL
+        revenue INT NOT NULL,
+        created timestamp default current_timestamp
       );
     `;
 
@@ -172,7 +176,8 @@ async function seedExpenses(client) {
     type VARCHAR(20) NOT NULL,
     amount INT NOT NULL,
     expense_date DATE NOT NULL,
-    date DATE NOT NULL
+    comments VARCHAR(500),
+    created timestamp default current_timestamp
   );
 `;
 
@@ -204,10 +209,10 @@ async function seedExpenses(client) {
 async function main() {
   const client = await db.connect();
 
-  // await seedUsers(client);
-  // await seedCustomers(client);
-  // await seedInvoices(client);
-  // await seedRevenue(client);
+  await seedUsers(client);
+  await seedCustomers(client);
+  await seedInvoices(client);
+  await seedRevenue(client);
   await seedExpenses(client);
 
   await client.end();

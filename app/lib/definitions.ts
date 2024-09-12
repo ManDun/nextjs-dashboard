@@ -96,3 +96,13 @@ export type ExpenseField = {
   expense_date: string;
   comments: string;
 };
+
+export type ContactField = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: number;
+  comments: string;
+  created: string;
+};

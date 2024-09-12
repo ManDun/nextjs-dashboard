@@ -370,6 +370,17 @@ export async function deleteExpense(id: string) {
     }
 }
 
+export async function deleteContact(id: string) {
+
+    try {
+        await sql`DELETE FROM contacts WHERE id = ${id}`;
+        revalidatePath('/dashboard/contacts');
+        return { message: 'Deleted Contact.' };
+    } catch (error) {
+        return { message: 'Database Error: Failed to Delete Contact.' };
+    }
+}
+
 export async function authenticate(
     prevState: string | undefined,
     formData: FormData,

@@ -9,6 +9,7 @@ import {
   Revenue,
   Customer,
   ExpenseField,
+  ContactField
 } from './definitions';
 import { formatCurrency } from './utils';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -72,12 +73,14 @@ export async function fetchCardData() {
     const totalExpensesPromise = sql`SELECT
          SUM(amount) AS "total"
          FROM expenses`;
+    const contactCountPromise = sql`SELECT COUNT(*) FROM contacts`;
 
     const data = await Promise.all([
       invoiceCountPromise,
       customerCountPromise,
       invoiceStatusPromise,
       totalExpensesPromise,
+      contactCountPromise,
     ]);
 
     const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
@@ -85,6 +88,7 @@ export async function fetchCardData() {
     const totalPaidInvoices = formatCurrency(data[2].rows[0].paid ?? '0');
     const totalPendingInvoices = formatCurrency(data[2].rows[0].pending ?? '0');
     const totalExpenses = formatCurrency(data[3].rows[0].total ?? '0');
+    const numberOfContacts = Number(data[4].rows[0].count ?? '0');
 
     return {
       numberOfCustomers,
@@ -92,6 +96,7 @@ export async function fetchCardData() {
       totalPaidInvoices,
       totalPendingInvoices,
       totalExpenses,
+      numberOfContacts
     };
   } catch (error) {
     console.error('Database Error:', error);
@@ -276,7 +281,7 @@ export async function fetchCustomerById(id: string) {
       ...customer,
     }));
 
-    console.log(customers); // Invoice is an empty array []
+    console.log(customers.length); // Invoice is an empty array []
     return customers[0];
   } catch (error) {
     console.error('Database Error:', error);
@@ -355,7 +360,7 @@ export async function fetchFilteredExpenses(query: string, currentPage: number) 
       ...expense,
     }));
 
-    console.log('Expenses returned: ' + expenses)
+    console.log('Expenses returned: ' + expenses.length)
 
     return expenses;
   } catch (err) {
@@ -391,6 +396,120 @@ export async function fetchExpenseById(id: string) {
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch expenses.');
+  }
+}
+
+const CONTACTS_PER_PAGE = 6
+export async function fetchContactsPages(query: string) {
+  noStore();
+  try {
+    const count = await sql`SELECT COUNT(*)
+    FROM contacts
+    WHERE
+    contacts.first_name ILIKE ${`%${query}%`} OR
+    contacts.last_name ILIKE ${`%${query}%`} OR
+    contacts.email ILIKE ${`%${query}%`} OR
+    contacts.phone ILIKE ${`%${query}%`} OR
+    contacts.comments ILIKE ${`%${query}%`} 
+  `;
+
+    const totalPages = Math.ceil(Number(count.rows[0].count) / CONTACTS_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of contacts.');
+  }
+}
+
+export async function fetchContacts() {
+  noStore();
+  try {
+    const data = await sql<ContactField>`
+      SELECT
+      id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      comments,
+      created
+      FROM contacts
+      ORDER BY created DESC
+    `;
+
+    const contacts = data.rows;
+    return contacts;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch all contacts.');
+  }
+}
+
+export async function fetchFilteredContacts(query: string, currentPage: number) {
+
+  console.log('Fetching filtered contacts: ' + query)
+  noStore();
+  const offset = (currentPage - 1) * CONTACTS_PER_PAGE;
+  try {
+    const data = await sql<ContactField>`
+		SELECT
+    id,
+    first_name,
+    last_name,
+    email,
+    phone,
+    comments,
+    created
+		FROM contacts
+    WHERE
+		first_name ILIKE ${`%${query}%`} OR
+    last_name ILIKE ${`%${query}%`} OR
+    email ILIKE ${`%${query}%`} OR
+    phone ILIKE ${`%${query}%`} OR
+    comments ILIKE ${`%${query}%`}
+		ORDER BY created DESC
+    LIMIT ${CONTACTS_PER_PAGE} OFFSET ${offset}
+	  `;
+
+    const contacts = data.rows.map((contact) => ({
+      ...contact,
+    }));
+
+    console.log('Contacts returned: ' + contacts.length)
+
+    return contacts;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch contact table.');
+  }
+}
+
+export async function fetchContactById(id: string) {
+  noStore();
+  console.log('Fetching contact with id: ' + id)
+  try {
+    const data = await sql<ContactField>`
+      SELECT
+      contacts.id,
+      contacts.first_name,
+      contacts.last_name,
+      contacts.email,
+      contacts.phone,
+      TO_CHAR(contacts.created, 'yyyy-mm-dd') AS contact_date,
+      contacts.comments
+      FROM contacts
+      WHERE contacts.id = ${id};
+    `;
+
+    const contacts = data.rows.map((contact) => ({
+      ...contact,
+    }));
+
+    console.log(contacts.length); // Contact is an empty array []
+    return contacts[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch contacts.');
   }
 }
 

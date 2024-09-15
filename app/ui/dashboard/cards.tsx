@@ -36,11 +36,11 @@ export default async function CardWrapper() {
       <Card title="Pending" value={totalPendingInvoices} type="pending" />
       <Card title="Expenses" value={totalExpenses} type="expenses" />
       <Card title="Total Invoices" value={numberOfInvoices} type="invoices" />
-      <Card
+      {/* <Card
         title="Total Customers"
         value={numberOfCustomers}
         type="customers"
-      />
+      /> */}
       <Card
         title="Total Contacts"
         value={numberOfContacts}

@@ -90,7 +90,7 @@ export default async function ExpensesTable({
                   <td className="whitespace-nowrap px-3 py-3">
                     {formatDateToLocal(expense.expense_date)}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3">
+                  <td className="whitespace-normal px-3 py-3">
                     {expense.comments}
                   </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">

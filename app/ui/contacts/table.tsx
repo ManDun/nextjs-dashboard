@@ -89,7 +89,7 @@ export default async function ExpensesTable({
                   <td className="whitespace-nowrap px-3 py-3">
                     {formatDateToLocal(contact.created)}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3">
+                  <td className="whitespace-normal px-3 py-3">
                     {contact.comments}
                   </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">

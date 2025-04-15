@@ -321,7 +321,7 @@ export async function fetchExpenses() {
       amount,
       expense_date
       FROM expenses
-      ORDER BY expense_date ASC
+      ORDER BY expense_date DESC
     `;
 
     const expenses = data.rows;

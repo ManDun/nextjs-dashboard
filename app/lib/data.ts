@@ -352,7 +352,7 @@ export async function fetchFilteredExpenses(query: string, currentPage: number) 
     type ILIKE ${`%${query}%`} OR
     amount::text ILIKE ${`%${query}%`} OR
     comments ILIKE ${`%${query}%`}
-		ORDER BY expense_date ASC
+		ORDER BY expense_date DESC
     LIMIT ${EXPENSES_PER_PAGE} OFFSET ${offset}
 	  `;
 
